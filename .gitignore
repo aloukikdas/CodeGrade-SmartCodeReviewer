@@ -1,0 +1,13 @@
+# Visual Studio
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.dbmdl
+
+# Mac
+.DS_Store
+
+# n8n local data (if stored here)
+.n8n/
