@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="CodeReviewer.Api/CodeReviewer.Api.csproj" />
+  <Project Path="CodeReviewer.Mvc/CodeReviewer.Mvc.csproj" />
+</Solution>
