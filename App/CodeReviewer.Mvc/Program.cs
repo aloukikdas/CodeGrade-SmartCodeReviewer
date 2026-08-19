@@ -13,6 +13,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Auth/Login";
         options.AccessDeniedPath = "/Auth/AccessDenied";
     });
+
 builder.Services.AddHttpClient<CodeReviewer.Mvc.Services.N8nService>();
 
 var app = builder.Build();
