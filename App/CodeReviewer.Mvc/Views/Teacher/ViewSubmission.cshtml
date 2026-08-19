@@ -1,0 +1,86 @@
+﻿@model CodeReviewer.Mvc.Models.SubmissionViewModel
+@{
+    ViewData["Title"] = "Review Submission";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="bi bi-file-earmark-code me-2"></i>Review Submission</h2>
+        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Submissions
+        </a>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">@Model.AssignmentTitle</h5>
+                    <p class="card-text text-muted mb-1"><strong>Language:</strong> <span class="text-uppercase">@Model.Language</span></p>
+                    <p class="card-text text-muted" style="white-space: pre-wrap;"><strong>Description:</strong><br />@Model.AssignmentDescription</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100 @(Model.Grade.HasValue ? "bg-light" : "bg-warning text-dark")">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <h5 class="card-title">AI Grade</h5>
+                    @if (Model.Grade.HasValue)
+                    {
+                        <h2 class="display-4 fw-bold text-success mb-0">@Model.Grade<span class="fs-4 text-muted">/100</span></h2>
+                    }
+                    else
+                    {
+                        <div class="spinner-border text-dark mx-auto my-2" role="status"></div>
+                        <p class="mb-0 fw-bold">Pending Analysis...</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-code-square me-2"></i>Submitted Code</span>
+            <span class="badge bg-secondary">Read-Only</span>
+        </div>
+        <div class="card-body p-0">
+            <div id="monacoEditor" style="height: 400px; width: 100%;"></div>
+        </div>
+    </div>
+    @if (Model.Grade.HasValue)
+    {
+        <div class="card shadow-sm border-0 mb-5">
+            <div class="card-header bg-primary text-white">
+                <span><i class="bi bi-robot me-2"></i>AI Feedback & Analysis</span>
+            </div>
+            <div class="card-body bg-light">
+                <p class="fs-5 mb-0" style="white-space: pre-wrap;">@Model.AiFeedback</p>
+            </div>
+        </div>
+    }
+</div>
+<textarea id="hiddenCode" style="display:none;">@Model.CodeText</textarea>
+<input type="hidden" id="hiddenLanguage" value="@Model.Language" />
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js"></script>
+    <script>
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+        var codeContent = document.getElementById('hiddenCode').value;
+        var languageType = document.getElementById('hiddenLanguage').value.toLowerCase();
+        if (languageType === 'c#') languageType = 'csharp';
+        if (languageType === 'c++') languageType = 'cpp';
+        if (languageType === 'python') languageType = 'python';
+        if (languageType === 'java') languageType = 'java';
+        var editor = monaco.editor.create(document.getElementById('monacoEditor'), {
+        value: codeContent,
+        language: languageType,
+        theme: 'vs-dark',
+        readOnly: true,
+        minimap: { enabled: false },
+        automaticLayout: true,
+        scrollBeyondLastLine: false
+        });
+        });
+    </script>
+}
