@@ -1,0 +1,48 @@
+﻿@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Enrolled Students";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="bi bi-people me-2"></i>Enrolled Students</h2>
+        <a asp-controller="Classroom" asp-action="TeacherIndex" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Classrooms
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0 align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="ps-3">Student Name</th>
+                            <th>Email Address</th>
+                            <th>Date Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center py-4 text-muted">No students are currently enrolled in this class.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var student in Model)
+                            {
+                                <tr>
+                                    <td class="ps-3 fw-bold">@student.GetProperty("name").GetString()</td>
+                                    <td>@student.GetProperty("email").GetString()</td>
+                                    <td>@DateTime.Parse(student.GetProperty("joinedDate").GetString()).ToString("MMM dd, yyyy - hh:mm tt")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

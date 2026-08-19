@@ -1,0 +1,177 @@
+﻿@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Classroom Submissions";
+}
+
+<div class="container mt-4">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="bi bi-journal-code me-2"></i>Submissions</h2>
+        <a asp-controller="Classroom" asp-action="TeacherIndex" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Classrooms
+        </a>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-5">
+            <div class="input-group shadow-sm">
+                <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" id="searchName" class="form-control border-start-0 ps-0" placeholder="Search by Student Name..." onkeyup="filterSubmissions()">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="input-group shadow-sm">
+                <span class="input-group-text bg-white text-muted"><i class="bi bi-book"></i></span>
+                <input type="text" id="searchAssignment" class="form-control border-start-0 ps-0" placeholder="Search by Assignment..." onkeyup="filterSubmissions()">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select id="filterStatus" class="form-select shadow-sm border-primary" onchange="filterSubmissions()">
+                <option value="all" selected>Status: All</option>
+                <option value="submitted">Status: Submitted</option>
+                <option value="not_submitted">Status: Not Submitted</option>
+            </select>
+        </div>
+    </div>
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table id="submissionsTable" class="table table-hover table-striped mb-0 align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="ps-3">ID</th>
+                            <th>Student</th>
+                            <th>Assignment</th>
+                            <th>Language</th>
+                            <th>Date Submitted</th>
+                            <th>Grade</th> <!-- NEW HEADER -->
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">No submissions found for this classroom.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var sub in Model)
+                            {
+                                var jsonSub = (System.Text.Json.JsonElement)sub;
+                                var status = jsonSub.GetProperty("status").GetString();
+                                var isSubmitted = status == "submitted";
+                                var hasGrade = (jsonSub.TryGetProperty("grade", out var gradeProp) || jsonSub.TryGetProperty("Grade", out gradeProp))
+                                               && gradeProp.ValueKind != System.Text.Json.JsonValueKind.Null;
+                                var gradeStr = hasGrade ? $"{gradeProp.GetInt32()} / 100" : "Pending AI";
+
+                                string displayDate = "";
+                                if (isSubmitted)
+                                {
+                                    var rawDate = jsonSub.GetProperty("submissionDate").GetString();
+                                    if (DateTime.TryParse(rawDate, out DateTime parsedDate))
+                                    {
+                                        var utcDate = parsedDate.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(parsedDate, DateTimeKind.Utc) : parsedDate.ToUniversalTime();
+                                        var istZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+                                        var istDate = TimeZoneInfo.ConvertTimeFromUtc(utcDate, istZone);
+                                        displayDate = istDate.ToString("MMM dd, yyyy - hh:mm tt");
+                                    }
+                                }
+
+                                <tr data-status="@status">
+                                    <td class="ps-3 fw-bold">@(isSubmitted ? $"#{jsonSub.GetProperty("id").GetString()}" : "-")</td>
+                                    <td>
+                                        <div class="fw-bold">@jsonSub.GetProperty("student").GetProperty("name").GetString()</div>
+                                        <div class="text-muted small">@jsonSub.GetProperty("student").GetProperty("email").GetString()</div>
+                                    </td>
+                                    <td>@jsonSub.GetProperty("assignment").GetProperty("title").GetString()</td>
+                                    <td>
+                                        @if (isSubmitted)
+                                        {
+                                            <span class="badge bg-secondary text-uppercase">@jsonSub.GetProperty("language").GetString()</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (isSubmitted)
+                                        {
+                                            @displayDate
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Not Submitted</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (isSubmitted)
+                                        {
+                                            <span class="badge @(hasGrade ? "bg-success" : "bg-warning text-dark")">@gradeStr</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (isSubmitted)
+                                        {
+                                            <div class="d-flex justify-content-center gap-2">
+                                                <a asp-controller="Teacher" asp-action="ViewSubmission" asp-route-id='@jsonSub.GetProperty("id").GetString()' class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-code-slash"></i> View Code
+                                                </a>
+                                                <form asp-action="DeleteSubmission" method="post" onsubmit="return confirm('Delete this submission? The student will be allowed to reattempt.');">
+                                                    <input type="hidden" name="id" value="@jsonSub.GetProperty("id").GetString()" />
+                                                    <input type="hidden" name="classroomId" value="@ViewBag.ClassroomId" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Submission">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterSubmissions() {
+            const nameFilter = document.getElementById("searchName").value.toLowerCase();
+            const assignFilter = document.getElementById("searchAssignment").value.toLowerCase();
+            const statusFilter = document.getElementById("filterStatus").value;
+            const table = document.getElementById("submissionsTable");
+            const rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                if (row.cells.length === 1) continue;
+                const studentName = row.cells[1].textContent.toLowerCase();
+                const assignmentName = row.cells[2].textContent.toLowerCase();
+                const rowStatus = row.getAttribute("data-status");
+                const matchesName = studentName.includes(nameFilter);
+                const matchesAssign = assignmentName.includes(assignFilter);
+                const matchesStatus = (statusFilter === "all" || statusFilter === rowStatus);
+                if (matchesName && matchesAssign && matchesStatus) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            }
+        }
+    </script>
+}

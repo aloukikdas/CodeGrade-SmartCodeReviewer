@@ -1,0 +1,33 @@
+﻿@{
+    ViewData["Title"] = "Teacher Dashboard";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+
+            <div class="mb-4">
+                <i class="bi bi-person-workspace text-primary" style="font-size: 5rem;"></i>
+            </div>
+
+            <h1 class="fw-bold mb-3">Welcome to the Teacher Portal!</h1>
+            <figure class="text-center mb-4 mt-4 px-4">
+                <blockquote class="blockquote fs-4 fst-italic text-muted">
+                    <p>"The master's greatest triumph is not in his own skill, but in giving the student the vision to see only the bird's eye."</p>
+                </blockquote>
+                <figcaption class="blockquote-footer mt-2 fs-6">
+                    Guru Dronacharya
+                </figcaption>
+            </figure>
+
+            <hr class="w-50 mx-auto mb-4" />
+
+            <div class="d-flex justify-content-center gap-3">
+                <a asp-controller="Classroom" asp-action="TeacherIndex" class="btn btn-primary btn-lg shadow-sm">
+                    <i class="bi bi-building me-2"></i> Manage My Classrooms
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>

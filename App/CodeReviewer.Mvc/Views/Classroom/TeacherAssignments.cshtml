@@ -1,0 +1,168 @@
+﻿@model IEnumerable<CodeReviewer.Mvc.Models.AssignmentViewModel>
+@{
+    ViewData["Title"] = "Manage Assignments";
+    var createForm = ViewBag.CreateForm as CodeReviewer.Mvc.Models.CreateAssignmentViewModel;
+}
+
+<div class="container mt-4">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="bi bi-card-checklist me-2"></i>Class Assignments</h2>
+        <a asp-controller="Classroom" asp-action="TeacherIndex" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Classrooms
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- The Create Assignment Form -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-header bg-dark text-white fw-bold">
+                    Post New Assignment
+                </div>
+                <div class="card-body p-3">
+                    <form asp-action="CreateAssignment" method="post">
+                        <input type="hidden" name="ClassroomId" value="@createForm?.ClassroomId" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Title</label>
+                            <input type="text" name="Title" class="form-control" placeholder="E.g., Array Sorting" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Description / Problem Statement</label>
+                            <textarea name="Description" class="form-control" rows="4" placeholder="Describe the code the student needs to write..." required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Allowed Language</label>
+                            <select name="AllowedLanguage" class="form-select">
+                                <option value="Any">Any Language</option>
+                                <option value="csharp">C#</option>
+                                <option value="cpp">C++</option>
+                                <option value="python">Python</option>
+                                <option value="java">Java</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">Post Assignment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- The Assignments List -->
+        <div class="col-md-8">
+            <div class="row">
+                @if (!Model.Any())
+                {
+                    <div class="col-12 text-center mt-5 text-muted">
+                        <i class="bi bi-inbox fs-1"></i>
+                        <p class="mt-2">You haven't posted any assignments for this class yet.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var assignment in Model)
+                    {
+                        <div class="col-md-6 mb-4">
+                            <div class="card shadow-sm border-0 border-top border-primary border-4 h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h5 class="card-title fw-bold">@assignment.Title</h5>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu shadow">
+                                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editModal-@assignment.Id"><i class="bi bi-pencil-square me-2"></i>Edit</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteModal-@assignment.Id"><i class="bi bi-trash me-2"></i>Delete</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <p class="text-muted small mb-0 mt-2" style="white-space: pre-wrap;">@assignment.Description</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Modal -->
+                        <div class="modal fade" id="editModal-@assignment.Id" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-primary text-white">
+                                        <h5 class="modal-title">Edit Assignment</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form asp-action="EditAssignment" method="post">
+                                        <div class="modal-body">
+                                            <input type="hidden" name="Id" value="@assignment.Id" />
+                                            <input type="hidden" name="ClassroomId" value="@assignment.ClassroomId" />
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Title</label>
+                                                <input type="text" name="Title" class="form-control" value="@assignment.Title" required />
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Description</label>
+                                                <textarea name="Description" class="form-control" rows="4" required>@assignment.Description</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">Allowed Language</label>
+                                            <select name="AllowedLanguage" class="form-select">
+                                                <option value="Any" selected="@(assignment.AllowedLanguage == "Any")">Any Language</option>
+                                                <option value="csharp" selected="@(assignment.AllowedLanguage == "csharp")">C#</option>
+                                                <option value="cpp" selected="@(assignment.AllowedLanguage == "cpp")">C++</option>
+                                                <option value="python" selected="@(assignment.AllowedLanguage == "python")">Python</option>
+                                                <option value="java" selected="@(assignment.AllowedLanguage == "java")">Java</option>
+                                            </select>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delete Modal -->
+                        <div class="modal fade" id="deleteModal-@assignment.Id" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-danger text-white">
+                                        <h5 class="modal-title">Delete Assignment</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form asp-action="DeleteAssignment" method="post">
+                                        <div class="modal-body">
+                                            <p>Are you sure you want to delete <strong>@assignment.Title</strong>?</p>
+                                            <p class="text-danger small"><i class="bi bi-exclamation-triangle me-1"></i>This action cannot be undone.</p>
+                                            <input type="hidden" name="id" value="@assignment.Id" />
+                                            <input type="hidden" name="classroomId" value="@assignment.ClassroomId" />
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
