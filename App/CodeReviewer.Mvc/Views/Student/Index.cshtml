@@ -1,0 +1,120 @@
+﻿@model CodeReviewer.Mvc.Models.SubmissionViewModel
+@{
+    ViewData["Title"] = "Student Portal - Code Submission";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-dark text-white p-3">
+                    <h4 class="mb-0"><i class="bi bi-code-square me-2"></i>Code Submission</h4>
+                </div>
+                <div class="card-body p-4">
+
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @Html.ValidationSummary(false, "", new { @class = "mb-0" })
+                        </div>
+                    }
+
+                    <form asp-action="SubmitCode" method="post" id="codeForm">
+                        <input type="hidden" asp-for="StudentId" />
+                        <input type="hidden" asp-for="AssignmentId" />
+                        <input type="hidden" asp-for="ClassroomId" />
+                        <input type="hidden" asp-for="CodeText" id="hiddenCodeInput" />
+                        <input type="hidden" asp-for="Language" id="hiddenLanguageInput" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Assignment Problem:</label>
+                            <div class="p-3 bg-light rounded border">
+                                <h5>@Model.AssignmentTitle</h5>
+                                <p class="text-muted mb-0" style="white-space: pre-wrap;">@Model.AssignmentDescription</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                            <label class="form-label fw-bold mb-0">Write Your Solution:</label>
+
+                            <!-- DYNAMIC LANGUAGE SELECTOR -->
+                            @if (Model.AllowedLanguage == "Any")
+                            {
+                                <select id="languageSelector" class="form-select form-select-sm w-auto border-primary" onchange="changeLanguage()">
+                                    <option value="csharp">C#</option>
+                                    <option value="cpp">C++</option>
+                                    <option value="python">Python</option>
+                                    <option value="java">Java</option>
+                                </select>
+                            }
+                            else
+                            {
+                                <span class="badge bg-primary fs-6">Required: @Model.AllowedLanguage.ToUpper()</span>
+                                <input type="hidden" id="languageSelector" value="@Model.AllowedLanguage" />
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <div id="editorContainer" style="height: 380px; border: 1px solid #ced4da; border-radius: 6px;"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-outline-secondary" onclick="resetEditor()">Reset Code</button>
+                            <button type="submit" class="btn btn-primary px-4" onclick="syncCode()">
+                                <i class="bi bi-send me-1"></i> Submit Solution
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js"></script>
+<script>
+    let editor;
+    let currentLang = document.getElementById('languageSelector').value.toLowerCase();
+
+    const defaultSnippets = {
+    'csharp': 'using System;\n\npublic class Solution\n{\n    public static void Main()\n    {\n        // Write your C# solution here\n        \n    }\n}',
+    'cpp': '#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your C++ solution here\n    \n    return 0;\n}',
+    'python': 'def main():\n    # Write your Python solution here\n    pass\n\nif __name__ == "__main__":\n    main()',
+    'java': 'public class Main {\n    public static void main(String[] args) {\n        // Write your Java solution here\n        \n    }\n}'
+    };
+
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' } });
+
+    require(['vs/editor/editor.main'], function () {
+    editor = monaco.editor.create(document.getElementById('editorContainer'), {
+    value: defaultSnippets[currentLang],
+    language: currentLang,
+    theme: 'vs-dark',
+    automaticLayout: true,
+    fontSize: 14,
+    minimap: { enabled: false }
+    });
+    });
+    function changeLanguage() {
+    currentLang = document.getElementById('languageSelector').value;
+    monaco.editor.setModelLanguage(editor.getModel(), currentLang);
+    editor.setValue(defaultSnippets[currentLang]);
+    }
+    function syncCode() {
+    document.getElementById('hiddenCodeInput').value = editor.getValue();
+    document.getElementById('hiddenLanguageInput').value = currentLang;
+    }
+    function resetEditor() {
+    if (editor) {
+    editor.setValue(defaultSnippets[currentLang]);
+    }
+    }
+</script>
